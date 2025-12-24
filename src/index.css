@@ -1,0 +1,17 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-slate-50 text-slate-900;
+  }
+}
+
+.glass-panel {
+  @apply bg-white/70 backdrop-blur-lg border border-white/50 shadow-xl;
+}
+
+.processing-gradient {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
