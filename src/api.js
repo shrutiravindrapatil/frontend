@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const api = axios.create({
-    baseURL: 'https://no-code-ml-builder-2.onrender.com/api', // FastAPI default
+    baseURL: 'https://no-code-ml-builder-2.onrender.com/api', // Local development - change to production URL when deploying
     headers: {
         'Content-Type': 'application/json',
     },
@@ -14,10 +14,10 @@ api.interceptors.response.use(
 
         if (error.response) {
             // Server returned an error (4xx, 5xx)
-            message = error.response.data?.detail || `Server Error: ${error.response.status}`;
+            message = error.response.data?.detail || `Magic Spell Failed! 🪄 (${error.response.status})`;
         } else if (error.request) {
             // Request was made but no response (Network error)
-            message = 'Could not reach the Magic Server. Is it running?';
+            message = 'The Magic Server is taking a nap! 😴 Please start the backend.';
         }
 
         // Trigger global notification

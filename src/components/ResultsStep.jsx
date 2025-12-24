@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Trophy, RefreshCw, BarChart2, CheckCircle, Sparkles, Wand2, Zap, Trash2 } from 'lucide-react';
+import { Trophy, RefreshCw, BarChart2, CheckCircle, Sparkles, Wand2, Zap, Trash2, Download } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import api from '../api';
 import Mascot from './Mascot';
@@ -13,6 +13,7 @@ export default function ResultsStep({ fileMetadata, onReset }) {
     const [isPredicting, setIsPredicting] = useState(false);
     const [validationError, setValidationError] = useState(null);
     const [error, setError] = useState(null);
+    const [isDownloading, setIsDownloading] = useState(false);
 
     const handleInputChange = (feature, value) => {
         setValidationError(null);
@@ -68,6 +69,43 @@ export default function ResultsStep({ fileMetadata, onReset }) {
         setPredictionInputs({});
         setPredictionResult(null);
         setValidationError(null);
+    };
+
+    const handleDownload = async () => {
+        setIsDownloading(true);
+        setError(null);
+        try {
+            const response = await fetch(`http://localhost:8000/api/download/${fileMetadata.file_id}`);
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error("Download error response:", errorText);
+                throw new Error(`Download failed: ${response.status} ${response.statusText}`);
+            }
+
+            // Get the blob from response
+            const blob = await response.blob();
+
+            // Create a download link
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `processed_data_${fileMetadata.file_id}.csv`;
+            document.body.appendChild(a);
+            a.click();
+
+            // Cleanup
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+        } catch (err) {
+            console.error("Download failed:", err);
+            const errorMsg = err.message.includes('fetch')
+                ? "Cannot connect to backend! Make sure it's running on http://localhost:8000"
+                : `Download error: ${err.message}`;
+            setError(errorMsg);
+        } finally {
+            setIsDownloading(false);
+        }
     };
 
     return (
@@ -286,11 +324,29 @@ export default function ResultsStep({ fileMetadata, onReset }) {
                             {/* Next Steps */}
                             <div className="flex flex-col gap-3 justify-center">
                                 <button
-                                    onClick={() => window.location.href = `http://localhost:8000/api/download/${fileMetadata.file_id}`}
-                                    className="w-full py-3 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition-all shadow-lg flex items-center justify-center gap-2"
+                                    onClick={handleDownload}
+                                    disabled={isDownloading}
+                                    className={`w-full py-3 rounded-xl font-bold transition-all shadow-lg flex items-center justify-center gap-2 ${isDownloading
+                                        ? 'bg-gray-400 text-white cursor-not-allowed'
+                                        : 'bg-blue-600 text-white hover:bg-blue-700'
+                                        }`}
                                 >
-                                    Download Processed Data
+                                    {isDownloading ? (
+                                        <>⏳ Downloading...</>
+                                    ) : (
+                                        <><Download size={20} /> Download Processed Data</>
+                                    )}
                                 </button>
+
+                                {error && !validationError && (
+                                    <motion.div
+                                        initial={{ opacity: 0, y: -10 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        className="bg-red-50 border border-red-200 rounded-lg p-3 text-center"
+                                    >
+                                        <p className="text-red-600 text-sm font-medium">⚠️ {error}</p>
+                                    </motion.div>
+                                )}
 
                                 <button
                                     onClick={onReset}

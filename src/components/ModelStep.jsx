@@ -12,6 +12,15 @@ export default function ModelStep({ fileMetadata, onComplete }) {
     const handleTrain = async () => {
         if (!selectedModel) return;
 
+        // Validation: Logistic Regression strictly needs numbers
+        if (selectedModel === 'logistic') {
+            const nonNumericFeatures = fileMetadata.selected_columns.filter(col => !fileMetadata.numeric_columns.includes(col));
+            if (nonNumericFeatures.length > 0) {
+                setError(`Oops! Logistic Regression can't understand words in: ${nonNumericFeatures.join(', ')}. Please choose Decision Tree or go back and encode them to numbers!`);
+                return;
+            }
+        }
+
         setIsTraining(true);
         setError(null);
         try {
@@ -40,6 +49,8 @@ export default function ModelStep({ fileMetadata, onComplete }) {
             id: 'logistic',
             name: 'Logistic Regression',
             desc: 'Like drawing a line to separate two groups. Great for Yes/No questions!',
+            typeDesc: 'Only for Numerical Data!',
+            typeColor: 'text-pink-500',
             icon: <Network className="w-10 h-10 text-cyan-500" />,
             color: 'border-cyan-500 bg-cyan-50'
         },
@@ -47,6 +58,8 @@ export default function ModelStep({ fileMetadata, onComplete }) {
             id: 'decision_tree',
             name: 'Decision Tree',
             desc: 'Like playing 20 Questions to find the answer. Good for complex patterns!',
+            typeDesc: 'Good for Numbers & Word Data!',
+            typeColor: 'text-violet-600',
             icon: <Cpu className="w-10 h-10 text-emerald-500" />,
             color: 'border-emerald-500 bg-emerald-50'
         }
@@ -74,14 +87,15 @@ export default function ModelStep({ fileMetadata, onComplete }) {
                                 }`}
                         >
                             <div className="flex justify-between items-start mb-4">
-
+                                {model.icon}
                                 <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${selectedModel === model.id ? 'border-blue-500' : 'border-gray-300'
                                     }`}>
                                     {selectedModel === model.id && <div className="w-3 h-3 bg-blue-500 rounded-full" />}
                                 </div>
                             </div>
                             <h3 className="text-xl font-bold text-gray-800 mb-2">{model.name}</h3>
-                            <p className="text-gray-500">{model.desc}</p>
+                            <p className="text-gray-500 mb-2">{model.desc}</p>
+                            <p className={`text-sm font-bold ${model.typeColor}`}>{model.typeDesc}</p>
                         </motion.div>
                     ))}
                 </div>
